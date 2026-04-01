@@ -169,3 +169,4 @@ frontend/
 | `POST`   | `/api/video/merge` | Start merge → SSE stream |
 | `GET`    | `/api/video/download/:jobId` | Download merged video |
 | `DELETE` | `/api/video/cleanup/:jobId` | Delete temp files |
+# videomerger

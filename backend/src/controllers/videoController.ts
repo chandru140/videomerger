@@ -183,12 +183,23 @@ export async function downloadVideo(req: Request, res: Response): Promise<void> 
   res.setHeader('Content-Length', stat.size);
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
+  // Capture files to delete BEFORE removing from the job store
+  const filesToDelete = [job.outputPath!, ...job.inputFiles];
+
   // Stream the file
   const readStream = fs.createReadStream(job.outputPath);
   readStream.pipe(res);
 
   readStream.on('error', () => {
     res.status(500).json({ error: 'Error streaming file.' });
+  });
+
+  // Auto-cleanup: delete all files from disk and remove job from memory
+  // once the download has fully finished (response closed by client).
+  res.on('close', () => {
+    jobs.delete(jobId);
+    cleanupFiles(filesToDelete);
+    console.log(`[Cleanup] Auto-deleted files for job ${jobId} after download.`);
   });
 }
 

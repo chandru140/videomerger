@@ -3,9 +3,13 @@ import path from 'path';
 import fs from 'fs';
 import { execSync } from 'child_process';
 
-// Resolve FFmpeg binary path: env var > common Homebrew paths > PATH
+import ffmpegStaticPath from 'ffmpeg-static';
+
+// Resolve FFmpeg binary path: env var > ffmpeg-static (bundled) > common Homebrew paths > PATH
 function resolveFfmpegPath(): string | null {
   if (process.env.FFMPEG_PATH) return process.env.FFMPEG_PATH;
+  // Use ffmpeg-static bundled binary (correct arch for current platform)
+  if (ffmpegStaticPath) return ffmpegStaticPath;
   const candidates = [
     '/opt/homebrew/bin/ffmpeg',   // Apple Silicon Homebrew
     '/usr/local/bin/ffmpeg',       // Intel Homebrew

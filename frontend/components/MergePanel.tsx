@@ -18,6 +18,7 @@ export default function MergePanel({ videos, onReset }: MergePanelProps) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
 
   const canMerge = videos.length >= 2;
 
@@ -64,6 +65,17 @@ export default function MergePanel({ videos, onReset }: MergePanelProps) {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      setDownloaded(true);
+      toast.success('Download started! Files will be removed from the server automatically. 🗑️');
+      // Auto-reset UI after download — backend already wiped the files
+      setTimeout(() => {
+        setPhase('idle');
+        setProgress(0);
+        setJobId(null);
+        setErrorMsg(null);
+        setDownloaded(false);
+        onReset();
+      }, 2500);
     } catch {
       toast.error('Failed to download file.');
     } finally {
@@ -72,13 +84,16 @@ export default function MergePanel({ videos, onReset }: MergePanelProps) {
   };
 
   const handleReset = async () => {
-    if (jobId) {
+    // Only call cleanupJob if the file was NOT already downloaded
+    // (backend auto-deletes on download, so calling again would 404)
+    if (jobId && !downloaded) {
       try { await cleanupJob(jobId); } catch { /* ignore */ }
     }
     setPhase('idle');
     setProgress(0);
     setJobId(null);
     setErrorMsg(null);
+    setDownloaded(false);
     onReset();
   };
 
